@@ -11,6 +11,8 @@ import React, { useMemo, useState, useEffect } from "react";
  *       - 5–11  => +10%
  *       - 12–15 => +15%
  *       - 16–20 => +20%
+ * - Cost rule:
+ *   • Cost increases by HALF of the Final Sale % increase.
  */
 
 const CATEGORY = {
@@ -51,7 +53,7 @@ const LEAD_TIMES = ["7 days", "3 days", "Less than 3 days"];
 const SEASONS = ["Low", "High"];
 const MIN_HOURS = 6;
 
-// ---------- Guests variation (NEW) ----------
+// ---------- Guests variation ----------
 const GUEST_VARIATION = [
   { min: 1, max: 4, adj: 0.0 },
   { min: 5, max: 11, adj: 0.10 },
@@ -318,13 +320,13 @@ export default function SmartPriceGenerator() {
   // keep selections valid
   useEffect(() => {
     if (!PARKS[category].includes(park)) setPark(PARKS[category][0]);
-  }, [category]);
+  }, [category, park]);
   useEffect(() => {
     if (!serviceOptions.includes(service)) setService(serviceOptions[0]);
-  }, [serviceOptions]);
+  }, [serviceOptions, service]);
   useEffect(() => {
     if (!tourTypeOptions.includes(tourType)) setTourType(tourTypeOptions[0]);
-  }, [tourTypeOptions]);
+  }, [tourTypeOptions, tourType]);
 
   const baseRow = getBaseForGuests(category, park, service, tourType, guests);
   const baseCost = baseRow?.cost ?? null;
@@ -336,11 +338,21 @@ export default function SmartPriceGenerator() {
   const leadAdj = leadTime === "3 days" ? 0.1 : leadTime === "Less than 3 days" ? 0.2 : 0;
   const guestAdj = getGuestAdj(guests);
 
+  // Multiplicador total que define o aumento do Final Sale
   const totalMultiplier = (1 + hotelAdj) * (1 + seasonAdj) * (1 + leadAdj) * (1 + guestAdj);
 
+  // Final Sale ajustado
   const finalSale = baseSale != null ? Math.round(baseSale * totalMultiplier) : null;
-  const pricePerGuest = finalSale != null ? Math.round((finalSale / Math.max(guests, 1)) * 100) / 100 : null;
-  const pricePerHour = finalSale != null ? Math.round((finalSale / MIN_HOURS) * 100) / 100 : null;
+
+  // >>> NOVO: custo sobe metade da % do Final Sale
+  // Ex.: totalMultiplier = 1.30 (30%); costMultiplier = 1 + 0.30/2 = 1.15 (15%)
+  const costMultiplier = 1 + (totalMultiplier - 1) / 2;
+  const finalCost = baseCost != null ? Math.round(baseCost * costMultiplier) : null;
+
+  const pricePerGuest =
+    finalSale != null ? Math.round((finalSale / Math.max(guests, 1)) * 100) / 100 : null;
+  const pricePerHour =
+    finalSale != null ? Math.round((finalSale / MIN_HOURS) * 100) / 100 : null;
 
   // Notices
   const notices = [
@@ -390,7 +402,7 @@ export default function SmartPriceGenerator() {
   const selectCls = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-300";
   const pillCls = "inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-100";
 
-  // ---- Guests Stepper (mobile-friendly) ----
+  // ---- Guests Stepper ----
   function clampGuests(n) {
     return Math.max(1, Math.min(20, n));
   }
@@ -401,7 +413,6 @@ export default function SmartPriceGenerator() {
     setGuests((g) => clampGuests(g - 1));
   }
   function onGuestsChange(e) {
-    // remove tudo que não é dígito
     const onlyDigits = (e.target.value || "").replace(/\D+/g, "");
     const n = onlyDigits === "" ? 1 : parseInt(onlyDigits, 10);
     setGuests(clampGuests(Number.isNaN(n) ? 1 : n));
@@ -471,13 +482,13 @@ export default function SmartPriceGenerator() {
                 </button>
 
                 <input
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={guests}
-                  onChange={onGuestsChange}
-                  onWheel={(e) => e.currentTarget.blur()}  // evita mudar ao rolar
-                  className="h-11 flex-1 min-w-0 text-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-lg font-semibold tracking-wide"
-                />
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={guests}
+                    onChange={onGuestsChange}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    className="h-11 flex-1 min-w-0 text-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-lg font-semibold tracking-wide"
+                    />
 
                 <button
                   type="button"
@@ -537,7 +548,8 @@ export default function SmartPriceGenerator() {
         <aside className={boxCls}>
           <h2 className="text-lg font-semibold text-slate-900">Result</h2>
           <div className="mt-3 grid grid-cols-1 gap-2">
-            <Row label="Cost" value={currency(baseCost)} />
+            {/* Mostra custo AJUSTADO (metade da % do sale) */}
+            <Row label="Cost" value={currency(finalCost)} />
             <Row label="Final Sale" value={currency(finalSale)} big />
             <div className="h-px w-full bg-slate-200 my-2" />
             <Row label="Price / Guest" value={currency(pricePerGuest)} />
