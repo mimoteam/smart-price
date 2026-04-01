@@ -69,12 +69,28 @@ function getGuestAdj(guests) {
 function rowKey(category, park, service, type) {
   return `${category} | ${park} | ${service} | ${type}`;
 }
+
 function expandRange(cost, sale, start, end) {
   const rows = [];
   for (let n = start; n <= end; n++) rows.push({ n, cost, sale });
   return rows;
 }
+
 const cloneRows = (rows) => rows.map((r) => ({ ...r }));
+
+const addGlobalIncrease = (rows) =>
+  rows.map((r) => ({
+    ...r,
+    cost: r.cost + 60,
+    sale: r.sale + 60,
+  }));
+
+const addEpicExtra = (rows) =>
+  rows.map((r) => ({
+    ...r,
+    cost: r.cost + 200,
+    sale: r.sale + 200,
+  }));
 
 // ---------- Base data ----------
 const BASE_DATA = (() => {
@@ -140,7 +156,12 @@ const BASE_DATA = (() => {
   );
 
   data.set(
-    rowKey(CATEGORY.DISNEY_WORLD, "Disney World", SERVICES.ATTRACTION_ASSISTANCE, TOUR_TYPES.VIRTUAL_ASSIST),
+    rowKey(
+      CATEGORY.DISNEY_WORLD,
+      "Disney World",
+      SERVICES.ATTRACTION_ASSISTANCE,
+      TOUR_TYPES.VIRTUAL_ASSIST
+    ),
     [
       ...expandRange(40, 80, 1, 6),
       ...expandRange(60, 120, 7, 12),
@@ -149,7 +170,12 @@ const BASE_DATA = (() => {
   );
 
   data.set(
-    rowKey(CATEGORY.DISNEY_WORLD, "Disney World", SERVICES.HALLOWEEN, TOUR_TYPES.VIRTUAL_GENERIC),
+    rowKey(
+      CATEGORY.DISNEY_WORLD,
+      "Disney World",
+      SERVICES.HALLOWEEN,
+      TOUR_TYPES.VIRTUAL_GENERIC
+    ),
     [
       ...expandRange(60, 120, 1, 10),
       ...expandRange(90, 140, 11, 14),
@@ -170,11 +196,21 @@ const BASE_DATA = (() => {
     ...expandRange(300, 700, 15, 20),
   ];
   data.set(
-    rowKey(CATEGORY.UNIVERSAL, "Universal or Islands (Per Park)", SERVICES.STANDARD, TOUR_TYPES.IN_PERSON),
+    rowKey(
+      CATEGORY.UNIVERSAL,
+      "Universal or Islands (Per Park)",
+      SERVICES.STANDARD,
+      TOUR_TYPES.IN_PERSON
+    ),
     uniInPerson
   );
   data.set(
-    rowKey(CATEGORY.UNIVERSAL, "Universal or Islands (Per Park)", SERVICES.STANDARD, TOUR_TYPES.VIRTUAL),
+    rowKey(
+      CATEGORY.UNIVERSAL,
+      "Universal or Islands (Per Park)",
+      SERVICES.STANDARD,
+      TOUR_TYPES.VIRTUAL
+    ),
     uniInPerson.map(({ n, cost, sale }) => ({
       n,
       cost: Math.round(cost / 2),
@@ -182,30 +218,24 @@ const BASE_DATA = (() => {
     }))
   );
 
-  // EPIC: +210 APENAS NO IN-PERSON
   const epicInPerson = [
-    ...expandRange(200, 760, 1, 5), // 550 + 210
-    { n: 6, cost: 200, sale: 860 }, // 650 + 210
-    ...expandRange(250, 860, 7, 10), // 650 + 210
-    ...expandRange(250, 1010, 11, 13), // 800 + 210
-    ...expandRange(300, 1210, 14, 20), // 1000 + 210
+    ...expandRange(200, 550, 1, 5),
+    { n: 6, cost: 200, sale: 650 },
+    ...expandRange(250, 650, 7, 10),
+    ...expandRange(250, 800, 11, 13),
+    ...expandRange(300, 1000, 14, 20),
   ];
   data.set(
     rowKey(CATEGORY.UNIVERSAL, "Epic", SERVICES.STANDARD, TOUR_TYPES.IN_PERSON),
     epicInPerson
   );
-
-  // EPIC VIRTUAL: SEM +210
-  const epicVirtual = [
-    ...expandRange(100, 275, 1, 5),
-    { n: 6, cost: 100, sale: 325 },
-    ...expandRange(125, 325, 7, 10),
-    ...expandRange(125, 400, 11, 13),
-    ...expandRange(150, 500, 14, 20),
-  ];
   data.set(
     rowKey(CATEGORY.UNIVERSAL, "Epic", SERVICES.STANDARD, TOUR_TYPES.VIRTUAL),
-    epicVirtual
+    epicInPerson.map(({ n, cost, sale }) => ({
+      n,
+      cost: Math.round(cost / 2),
+      sale: Math.round(sale / 2),
+    }))
   );
 
   const uHInPerson = [
@@ -215,11 +245,21 @@ const BASE_DATA = (() => {
     ...expandRange(600, 1200, 14, 20),
   ];
   data.set(
-    rowKey(CATEGORY.UNIVERSAL, "Universal Hollywood", SERVICES.STANDARD, TOUR_TYPES.IN_PERSON),
+    rowKey(
+      CATEGORY.UNIVERSAL,
+      "Universal Hollywood",
+      SERVICES.STANDARD,
+      TOUR_TYPES.IN_PERSON
+    ),
     uHInPerson
   );
   data.set(
-    rowKey(CATEGORY.UNIVERSAL, "Universal Hollywood", SERVICES.STANDARD, TOUR_TYPES.VIRTUAL),
+    rowKey(
+      CATEGORY.UNIVERSAL,
+      "Universal Hollywood",
+      SERVICES.STANDARD,
+      TOUR_TYPES.VIRTUAL
+    ),
     uHInPerson.map(({ n, cost, sale }) => ({
       n,
       cost: Math.round(cost / 2),
@@ -239,7 +279,10 @@ const BASE_DATA = (() => {
     ...expandRange(300, 700, 15, 20),
   ];
   ["Sea World", "Busch Gardens", "Legoland"].forEach((p) => {
-    data.set(rowKey(CATEGORY.OTHER, p, SERVICES.STANDARD, TOUR_TYPES.IN_PERSON), otherTemplate);
+    data.set(
+      rowKey(CATEGORY.OTHER, p, SERVICES.STANDARD, TOUR_TYPES.IN_PERSON),
+      otherTemplate
+    );
   });
 
   const dlVirtual = [
@@ -287,9 +330,32 @@ const BASE_DATA = (() => {
     { n: 20, cost: 660, sale: 2000 },
   ];
   ["Disneyland Park", "Disney California Adventure"].forEach((p) => {
-    data.set(rowKey(CATEGORY.DISNEYLAND, p, SERVICES.STANDARD, TOUR_TYPES.VIRTUAL), dlVirtual);
-    data.set(rowKey(CATEGORY.DISNEYLAND, p, SERVICES.STANDARD, TOUR_TYPES.IN_PERSON), dlInPerson);
+    data.set(
+      rowKey(CATEGORY.DISNEYLAND, p, SERVICES.STANDARD, TOUR_TYPES.VIRTUAL),
+      dlVirtual
+    );
+    data.set(
+      rowKey(CATEGORY.DISNEYLAND, p, SERVICES.STANDARD, TOUR_TYPES.IN_PERSON),
+      dlInPerson
+    );
   });
+
+  // ---------- APPLY GLOBAL +60 ----------
+  for (const [key, rows] of data.entries()) {
+    data.set(key, addGlobalIncrease(rows));
+  }
+
+  // ---------- APPLY EPIC EXTRA +200 (IN-PERSON ONLY) ----------
+  const epicKey = rowKey(
+    CATEGORY.UNIVERSAL,
+    "Epic",
+    SERVICES.STANDARD,
+    TOUR_TYPES.IN_PERSON
+  );
+
+  if (data.has(epicKey)) {
+    data.set(epicKey, addEpicExtra(data.get(epicKey)));
+  }
 
   return data;
 })();
@@ -298,14 +364,7 @@ function getBaseForGuests(category, park, service, type, guests) {
   const key = rowKey(category, park, service, type);
   const rows = BASE_DATA.get(key);
   if (!rows) return null;
-
-  const row = rows.find((r) => r.n === guests);
-  if (!row) return null;
-
-  return {
-    ...row,
-    cost: row.cost + 60, // +60 em todos os costs
-  };
+  return rows.find((r) => r.n === guests) || null;
 }
 
 function currency(n) {
@@ -323,7 +382,12 @@ export default function SmartPriceGenerator() {
 
   const serviceOptions = useMemo(() => {
     if (category === CATEGORY.DISNEY_WORLD)
-      return [SERVICES.TEAM_USA, SERVICES.TEAM_BRAZIL, SERVICES.ATTRACTION_ASSISTANCE, SERVICES.HALLOWEEN];
+      return [
+        SERVICES.TEAM_USA,
+        SERVICES.TEAM_BRAZIL,
+        SERVICES.ATTRACTION_ASSISTANCE,
+        SERVICES.HALLOWEEN,
+      ];
     if (category === CATEGORY.UNIVERSAL) return [SERVICES.STANDARD];
     if (category === CATEGORY.DISNEYLAND) return [SERVICES.STANDARD];
     return [SERVICES.STANDARD];
@@ -331,11 +395,16 @@ export default function SmartPriceGenerator() {
   const [service, setService] = useState(serviceOptions[0]);
 
   const tourTypeOptions = useMemo(() => {
-    if (service === SERVICES.ATTRACTION_ASSISTANCE) return [TOUR_TYPES.VIRTUAL_ASSIST];
-    if (service === SERVICES.HALLOWEEN) return [TOUR_TYPES.VIRTUAL_GENERIC];
-    if (category === CATEGORY.DISNEY_WORLD) return [TOUR_TYPES.VIRTUAL, TOUR_TYPES.PREMIER_VIRTUAL];
-    if (category === CATEGORY.UNIVERSAL) return [TOUR_TYPES.IN_PERSON, TOUR_TYPES.VIRTUAL];
-    if (category === CATEGORY.DISNEYLAND) return [TOUR_TYPES.VIRTUAL, TOUR_TYPES.IN_PERSON];
+    if (service === SERVICES.ATTRACTION_ASSISTANCE)
+      return [TOUR_TYPES.VIRTUAL_ASSIST];
+    if (service === SERVICES.HALLOWEEN)
+      return [TOUR_TYPES.VIRTUAL_GENERIC];
+    if (category === CATEGORY.DISNEY_WORLD)
+      return [TOUR_TYPES.VIRTUAL, TOUR_TYPES.PREMIER_VIRTUAL];
+    if (category === CATEGORY.UNIVERSAL)
+      return [TOUR_TYPES.IN_PERSON, TOUR_TYPES.VIRTUAL];
+    if (category === CATEGORY.DISNEYLAND)
+      return [TOUR_TYPES.VIRTUAL, TOUR_TYPES.IN_PERSON];
     return [TOUR_TYPES.IN_PERSON];
   }, [category, service]);
   const [tourType, setTourType] = useState(tourTypeOptions[0]);
@@ -349,9 +418,11 @@ export default function SmartPriceGenerator() {
   useEffect(() => {
     if (!PARKS[category].includes(park)) setPark(PARKS[category][0]);
   }, [category, park]);
+
   useEffect(() => {
     if (!serviceOptions.includes(service)) setService(serviceOptions[0]);
   }, [serviceOptions, service]);
+
   useEffect(() => {
     if (!tourTypeOptions.includes(tourType)) setTourType(tourTypeOptions[0]);
   }, [tourTypeOptions, tourType]);
@@ -363,55 +434,97 @@ export default function SmartPriceGenerator() {
   // Surcharges
   const hotelAdj = park === "Disney World" ? (hotel === "No" ? 0.1 : 0) : 0;
   const seasonAdj = season === "High" ? 0.2 : 0;
-  const leadAdj = leadTime === "3 days" ? 0.1 : leadTime === "Less than 3 days" ? 0.2 : 0;
+  const leadAdj =
+    leadTime === "3 days" ? 0.1 : leadTime === "Less than 3 days" ? 0.2 : 0;
   const guestAdj = getGuestAdj(guests);
 
-  const totalMultiplier = (1 + hotelAdj) * (1 + seasonAdj) * (1 + leadAdj) * (1 + guestAdj);
+  // Multiplicador total que define o aumento do Final Sale
+  const totalMultiplier =
+    (1 + hotelAdj) * (1 + seasonAdj) * (1 + leadAdj) * (1 + guestAdj);
 
-  const finalSale = baseSale != null ? Math.round(baseSale * totalMultiplier) : null;
+  // Final Sale ajustado
+  const finalSale =
+    baseSale != null ? Math.round(baseSale * totalMultiplier) : null;
 
+  // Custo sobe metade da % do Final Sale
   const costMultiplier = 1 + (totalMultiplier - 1) / 2;
-  const finalCost = baseCost != null ? Math.round(baseCost * costMultiplier) : null;
+  const finalCost =
+    baseCost != null ? Math.round(baseCost * costMultiplier) : null;
 
   const pricePerGuest =
-    finalSale != null ? Math.round((finalSale / Math.max(guests, 1)) * 100) / 100 : null;
-  const pricePerHour =
-    finalSale != null ? Math.round((finalSale / MIN_HOURS) * 100) / 100 : null;
+    finalSale != null
+      ? Math.round((finalSale / Math.max(guests, 1)) * 100) / 100
+      : null;
 
+  const pricePerHour =
+    finalSale != null
+      ? Math.round((finalSale / MIN_HOURS) * 100) / 100
+      : null;
+
+  // Notices
   const notices = [
     "EN: All prices are park-specific and subject to selected surcharges.",
     "PT: Todos os preços são específicos por parque e sujeitos aos acréscimos selecionados.",
   ];
+
   if (park === "Disney World" && tourType === TOUR_TYPES.IN_PERSON) {
-    notices.push("EN: No in-person tour available for Disney World.", "PT: Disney World não possui In-Person Tour.");
+    notices.push(
+      "EN: No in-person tour available for Disney World.",
+      "PT: Disney World não possui In-Person Tour."
+    );
   }
-  if (service === SERVICES.ATTRACTION_ASSISTANCE && park !== "Disney World") {
+
+  if (
+    service === SERVICES.ATTRACTION_ASSISTANCE &&
+    park !== "Disney World"
+  ) {
     notices.push(
       "EN: Attraction Assistance is only valid for Disney World.",
       "PT: O serviço Attraction Assistance só é válido para o parque Disney World."
     );
   }
-  if (park === "Disney World" && service === SERVICES.ATTRACTION_ASSISTANCE) {
-    notices.push("EN: Remember: this service covers only 2 attractions.", "PT: Lembre-se: este serviço cobre apenas 2 atrações.");
+
+  if (
+    park === "Disney World" &&
+    service === SERVICES.ATTRACTION_ASSISTANCE
+  ) {
+    notices.push(
+      "EN: Remember: this service covers only 2 attractions.",
+      "PT: Lembre-se: este serviço cobre apenas 2 atrações."
+    );
   }
+
   if (guests > 12) {
     notices.push(
       "EN: Large group—consider splitting into 2+ services if there’s a big age difference.",
       "PT: Grupo grande — considere dividir em 2+ serviços se houver grande diferença de idade."
     );
   }
+
   if (park === "Epic" || park === "Universal Hollywood") {
-    notices.push("EN: Add the guide’s park ticket to the total ($300+).", "PT: Adicione o ingresso do guia ao total (US$300+).");
+    notices.push(
+      "EN: Add the guide’s park ticket to the total ($300+).",
+      "PT: Adicione o ingresso do guia ao total (US$300+)."
+    );
   }
+
   if (category === CATEGORY.DISNEYLAND) {
     notices.push(
       "EN: Remind the client which attractions are included in Lightning Lane.",
       "PT: Avise o cliente das atrações incluídas no Lightning Lane."
     );
   }
-  if (park === "Disney World" && service === SERVICES.HALLOWEEN) {
-    notices.push("EN: Special event: client may enter the park from 4:00 PM.", "PT: Evento especial: o cliente pode entrar no parque a partir das 16h.");
+
+  if (
+    park === "Disney World" &&
+    service === SERVICES.HALLOWEEN
+  ) {
+    notices.push(
+      "EN: Special event: client may enter the park from 4:00 PM.",
+      "PT: Evento especial: o cliente pode entrar no parque a partir das 16h."
+    );
   }
+
   if (!baseRow) {
     notices.push(
       "EN: No base price for this combination (check Category/Park/Service/Tour Type/Guests).",
@@ -419,20 +532,28 @@ export default function SmartPriceGenerator() {
     );
   }
 
+  // ---- UI helpers ----
   const labelCls = "text-sm font-medium text-slate-700";
-  const boxCls = "rounded-2xl border border-slate-200 bg-white shadow-sm p-5 hover:shadow transition";
-  const selectCls = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-300";
-  const pillCls = "inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-100";
+  const boxCls =
+    "rounded-2xl border border-slate-200 bg-white shadow-sm p-5 hover:shadow transition";
+  const selectCls =
+    "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-300";
+  const pillCls =
+    "inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-100";
 
+  // ---- Guests Stepper ----
   function clampGuests(n) {
     return Math.max(1, Math.min(20, n));
   }
+
   function inc() {
     setGuests((g) => clampGuests(g + 1));
   }
+
   function dec() {
     setGuests((g) => clampGuests(g - 1));
   }
+
   function onGuestsChange(e) {
     const onlyDigits = (e.target.value || "").replace(/\D+/g, "");
     const n = onlyDigits === "" ? 1 : parseInt(onlyDigits, 10);
@@ -440,50 +561,82 @@ export default function SmartPriceGenerator() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-linear-to-b from-sky-50 to-white text-slate-900">
+    <div className="min-h-screen w-full bg-gradient-to-b from-sky-50 to-white text-slate-900">
       <header className="mx-auto max-w-6xl px-6 pt-10 pb-4">
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Smart Price Generator</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
+          Smart Price Generator
+        </h1>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 pb-16 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: selectors */}
         <section className={boxCls + " lg:col-span-2"}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Category */}
             <div>
               <label className={labelCls}>Category</label>
-              <select className={selectCls} value={category} onChange={(e) => setCategory(e.target.value)}>
+              <select
+                className={selectCls}
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
                 {Object.values(CATEGORY).map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Park */}
             <div>
               <label className={labelCls}>Park</label>
-              <select className={selectCls} value={park} onChange={(e) => setPark(e.target.value)}>
+              <select
+                className={selectCls}
+                value={park}
+                onChange={(e) => setPark(e.target.value)}
+              >
                 {PARKS[category].map((p) => (
-                  <option key={p} value={p}>{p}</option>
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Service/Team */}
             <div>
               <label className={labelCls}>Service / Team</label>
-              <select className={selectCls} value={service} onChange={(e) => setService(e.target.value)}>
+              <select
+                className={selectCls}
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+              >
                 {serviceOptions.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Tour Type */}
             <div>
               <label className={labelCls}>Tour Type</label>
-              <select className={selectCls} value={tourType} onChange={(e) => setTourType(e.target.value)}>
+              <select
+                className={selectCls}
+                value={tourType}
+                onChange={(e) => setTourType(e.target.value)}
+              >
                 {tourTypeOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Guests — mobile stepper */}
             <div>
               <label className={labelCls}>Guests (1–20)</label>
               <div className="flex items-stretch gap-2">
@@ -514,47 +667,80 @@ export default function SmartPriceGenerator() {
                   +
                 </button>
               </div>
-              <p className="mt-1 text-xs text-slate-500">Use os botões ou digite — valores entre 1 e 20.</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Use os botões ou digite — valores entre 1 e 20.
+              </p>
             </div>
 
+            {/* Disney Hotel? (only for Disney World) */}
             {park === "Disney World" && (
               <div>
                 <label className={labelCls}>Disney Hotel?</label>
-                <select className={selectCls} value={hotel} onChange={(e) => setHotel(e.target.value)}>
+                <select
+                  className={selectCls}
+                  value={hotel}
+                  onChange={(e) => setHotel(e.target.value)}
+                >
                   {["Yes", "No"].map((h) => (
-                    <option key={h} value={h}>{h}</option>
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
                   ))}
                 </select>
               </div>
             )}
 
+            {/* Lead Time */}
             <div>
               <label className={labelCls}>Lead Time</label>
-              <select className={selectCls} value={leadTime} onChange={(e) => setLeadTime(e.target.value)}>
+              <select
+                className={selectCls}
+                value={leadTime}
+                onChange={(e) => setLeadTime(e.target.value)}
+              >
                 {LEAD_TIMES.map((l) => (
-                  <option key={l} value={l}>{l}</option>
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Season */}
             <div>
               <label className={labelCls}>Season</label>
-              <select className={selectCls} value={season} onChange={(e) => setSeason(e.target.value)}>
+              <select
+                className={selectCls}
+                value={season}
+                onChange={(e) => setSeason(e.target.value)}
+              >
                 {SEASONS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
 
+          {/* Surcharge pills */}
           <div className="mt-5 flex flex-wrap gap-2">
-            <span className={pillCls}>Hotel Adj: {(hotelAdj * 100).toFixed(0)}%</span>
-            <span className={pillCls}>Season Adj: {(seasonAdj * 100).toFixed(0)}%</span>
-            <span className={pillCls}>Lead Time Adj: {(leadAdj * 100).toFixed(0)}%</span>
-            <span className={pillCls}>Guests Adj: {(guestAdj * 100).toFixed(0)}%</span>
+            <span className={pillCls}>
+              Hotel Adj: {(hotelAdj * 100).toFixed(0)}%
+            </span>
+            <span className={pillCls}>
+              Season Adj: {(seasonAdj * 100).toFixed(0)}%
+            </span>
+            <span className={pillCls}>
+              Lead Time Adj: {(leadAdj * 100).toFixed(0)}%
+            </span>
+            <span className={pillCls}>
+              Guests Adj: {(guestAdj * 100).toFixed(0)}%
+            </span>
           </div>
         </section>
 
+        {/* Right: results */}
         <aside className={boxCls}>
           <h2 className="text-lg font-semibold text-slate-900">Result</h2>
           <div className="mt-3 grid grid-cols-1 gap-2">
@@ -562,11 +748,16 @@ export default function SmartPriceGenerator() {
             <Row label="Final Sale" value={currency(finalSale)} big />
             <div className="h-px w-full bg-slate-200 my-2" />
             <Row label="Price / Guest" value={currency(pricePerGuest)} />
-            <Row label={`Price / Hour (min ${MIN_HOURS}h)`} value={currency(pricePerHour)} />
+            <Row
+              label={`Price / Hour (min ${MIN_HOURS}h)`}
+              value={currency(pricePerHour)}
+            />
           </div>
 
           <div className="mt-6">
-            <h3 className="text-sm font-semibold text-slate-800 mb-2">Notices (PT/EN)</h3>
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">
+              Notices (PT/EN)
+            </h3>
             <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700">
               {notices.map((n, i) => (
                 <li key={i}>{n}</li>
@@ -576,7 +767,8 @@ export default function SmartPriceGenerator() {
 
           {!baseRow && (
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-800 text-sm">
-              No base price for this combination (check Category/Park/Service/Tour Type/Guests).
+              No base price for this combination (check
+              Category/Park/Service/Tour Type/Guests).
             </div>
           )}
         </aside>
@@ -593,7 +785,11 @@ function Row({ label, value, big = false }) {
   return (
     <div className="flex items-center justify-between rounded-xl bg-sky-50 px-3 py-2 border border-sky-100">
       <span className="text-slate-700 text-sm">{label}</span>
-      <span className={"font-semibold text-slate-900 " + (big ? "text-xl" : "text-base")}>
+      <span
+        className={
+          "font-semibold text-slate-900 " + (big ? "text-xl" : "text-base")
+        }
+      >
         {value}
       </span>
     </div>
