@@ -175,20 +175,37 @@ const BASE_DATA = (() => {
   );
   data.set(
     rowKey(CATEGORY.UNIVERSAL, "Universal or Islands (Per Park)", SERVICES.STANDARD, TOUR_TYPES.VIRTUAL),
-    uniInPerson.map(({ n, cost, sale }) => ({ n, cost: Math.round(cost / 2), sale: Math.round(sale / 2) }))
+    uniInPerson.map(({ n, cost, sale }) => ({
+      n,
+      cost: Math.round(cost / 2),
+      sale: Math.round(sale / 2),
+    }))
   );
 
+  // EPIC: +210 APENAS NO IN-PERSON
   const epicInPerson = [
-    ...expandRange(200, 550, 1, 5),
-    { n: 6, cost: 200, sale: 650 },
-    ...expandRange(250, 650, 7, 10),
-    ...expandRange(250, 800, 11, 13),
-    ...expandRange(300, 1000, 14, 20),
+    ...expandRange(200, 760, 1, 5), // 550 + 210
+    { n: 6, cost: 200, sale: 860 }, // 650 + 210
+    ...expandRange(250, 860, 7, 10), // 650 + 210
+    ...expandRange(250, 1010, 11, 13), // 800 + 210
+    ...expandRange(300, 1210, 14, 20), // 1000 + 210
   ];
-  data.set(rowKey(CATEGORY.UNIVERSAL, "Epic", SERVICES.STANDARD, TOUR_TYPES.IN_PERSON), epicInPerson);
+  data.set(
+    rowKey(CATEGORY.UNIVERSAL, "Epic", SERVICES.STANDARD, TOUR_TYPES.IN_PERSON),
+    epicInPerson
+  );
+
+  // EPIC VIRTUAL: SEM +210
+  const epicVirtual = [
+    ...expandRange(100, 275, 1, 5),
+    { n: 6, cost: 100, sale: 325 },
+    ...expandRange(125, 325, 7, 10),
+    ...expandRange(125, 400, 11, 13),
+    ...expandRange(150, 500, 14, 20),
+  ];
   data.set(
     rowKey(CATEGORY.UNIVERSAL, "Epic", SERVICES.STANDARD, TOUR_TYPES.VIRTUAL),
-    epicInPerson.map(({ n, cost, sale }) => ({ n, cost: Math.round(cost / 2), sale: Math.round(sale / 2) }))
+    epicVirtual
   );
 
   const uHInPerson = [
@@ -203,7 +220,11 @@ const BASE_DATA = (() => {
   );
   data.set(
     rowKey(CATEGORY.UNIVERSAL, "Universal Hollywood", SERVICES.STANDARD, TOUR_TYPES.VIRTUAL),
-    uHInPerson.map(({ n, cost, sale }) => ({ n, cost: Math.round(cost / 2), sale: Math.round(sale / 2) }))
+    uHInPerson.map(({ n, cost, sale }) => ({
+      n,
+      cost: Math.round(cost / 2),
+      sale: Math.round(sale / 2),
+    }))
   );
 
   const otherTemplate = [
@@ -277,7 +298,14 @@ function getBaseForGuests(category, park, service, type, guests) {
   const key = rowKey(category, park, service, type);
   const rows = BASE_DATA.get(key);
   if (!rows) return null;
-  return rows.find((r) => r.n === guests) || null;
+
+  const row = rows.find((r) => r.n === guests);
+  if (!row) return null;
+
+  return {
+    ...row,
+    cost: row.cost + 60, // +60 em todos os costs
+  };
 }
 
 function currency(n) {
@@ -338,14 +366,10 @@ export default function SmartPriceGenerator() {
   const leadAdj = leadTime === "3 days" ? 0.1 : leadTime === "Less than 3 days" ? 0.2 : 0;
   const guestAdj = getGuestAdj(guests);
 
-  // Multiplicador total que define o aumento do Final Sale
   const totalMultiplier = (1 + hotelAdj) * (1 + seasonAdj) * (1 + leadAdj) * (1 + guestAdj);
 
-  // Final Sale ajustado
   const finalSale = baseSale != null ? Math.round(baseSale * totalMultiplier) : null;
 
-  // >>> NOVO: custo sobe metade da % do Final Sale
-  // Ex.: totalMultiplier = 1.30 (30%); costMultiplier = 1 + 0.30/2 = 1.15 (15%)
   const costMultiplier = 1 + (totalMultiplier - 1) / 2;
   const finalCost = baseCost != null ? Math.round(baseCost * costMultiplier) : null;
 
@@ -354,7 +378,6 @@ export default function SmartPriceGenerator() {
   const pricePerHour =
     finalSale != null ? Math.round((finalSale / MIN_HOURS) * 100) / 100 : null;
 
-  // Notices
   const notices = [
     "EN: All prices are park-specific and subject to selected surcharges.",
     "PT: Todos os preços são específicos por parque e sujeitos aos acréscimos selecionados.",
@@ -396,13 +419,11 @@ export default function SmartPriceGenerator() {
     );
   }
 
-  // ---- UI helpers ----
   const labelCls = "text-sm font-medium text-slate-700";
   const boxCls = "rounded-2xl border border-slate-200 bg-white shadow-sm p-5 hover:shadow transition";
   const selectCls = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-300";
   const pillCls = "inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-100";
 
-  // ---- Guests Stepper ----
   function clampGuests(n) {
     return Math.max(1, Math.min(20, n));
   }
@@ -419,16 +440,14 @@ export default function SmartPriceGenerator() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-sky-50 to-white text-slate-900">
+    <div className="min-h-screen w-full bg-linear-to-b from-sky-50 to-white text-slate-900">
       <header className="mx-auto max-w-6xl px-6 pt-10 pb-4">
         <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Smart Price Generator</h1>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 pb-16 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: selectors */}
         <section className={boxCls + " lg:col-span-2"}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Category */}
             <div>
               <label className={labelCls}>Category</label>
               <select className={selectCls} value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -438,7 +457,6 @@ export default function SmartPriceGenerator() {
               </select>
             </div>
 
-            {/* Park */}
             <div>
               <label className={labelCls}>Park</label>
               <select className={selectCls} value={park} onChange={(e) => setPark(e.target.value)}>
@@ -448,7 +466,6 @@ export default function SmartPriceGenerator() {
               </select>
             </div>
 
-            {/* Service/Team */}
             <div>
               <label className={labelCls}>Service / Team</label>
               <select className={selectCls} value={service} onChange={(e) => setService(e.target.value)}>
@@ -458,7 +475,6 @@ export default function SmartPriceGenerator() {
               </select>
             </div>
 
-            {/* Tour Type */}
             <div>
               <label className={labelCls}>Tour Type</label>
               <select className={selectCls} value={tourType} onChange={(e) => setTourType(e.target.value)}>
@@ -468,7 +484,6 @@ export default function SmartPriceGenerator() {
               </select>
             </div>
 
-            {/* Guests — mobile stepper */}
             <div>
               <label className={labelCls}>Guests (1–20)</label>
               <div className="flex items-stretch gap-2">
@@ -482,13 +497,13 @@ export default function SmartPriceGenerator() {
                 </button>
 
                 <input
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={guests}
-                    onChange={onGuestsChange}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    className="h-11 flex-1 min-w-0 text-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-lg font-semibold tracking-wide"
-                    />
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={guests}
+                  onChange={onGuestsChange}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  className="h-11 flex-1 min-w-0 text-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-lg font-semibold tracking-wide"
+                />
 
                 <button
                   type="button"
@@ -502,7 +517,6 @@ export default function SmartPriceGenerator() {
               <p className="mt-1 text-xs text-slate-500">Use os botões ou digite — valores entre 1 e 20.</p>
             </div>
 
-            {/* Disney Hotel? (only for Disney World) */}
             {park === "Disney World" && (
               <div>
                 <label className={labelCls}>Disney Hotel?</label>
@@ -514,7 +528,6 @@ export default function SmartPriceGenerator() {
               </div>
             )}
 
-            {/* Lead Time */}
             <div>
               <label className={labelCls}>Lead Time</label>
               <select className={selectCls} value={leadTime} onChange={(e) => setLeadTime(e.target.value)}>
@@ -524,7 +537,6 @@ export default function SmartPriceGenerator() {
               </select>
             </div>
 
-            {/* Season */}
             <div>
               <label className={labelCls}>Season</label>
               <select className={selectCls} value={season} onChange={(e) => setSeason(e.target.value)}>
@@ -535,7 +547,6 @@ export default function SmartPriceGenerator() {
             </div>
           </div>
 
-          {/* Surcharge pills */}
           <div className="mt-5 flex flex-wrap gap-2">
             <span className={pillCls}>Hotel Adj: {(hotelAdj * 100).toFixed(0)}%</span>
             <span className={pillCls}>Season Adj: {(seasonAdj * 100).toFixed(0)}%</span>
@@ -544,11 +555,9 @@ export default function SmartPriceGenerator() {
           </div>
         </section>
 
-        {/* Right: results */}
         <aside className={boxCls}>
           <h2 className="text-lg font-semibold text-slate-900">Result</h2>
           <div className="mt-3 grid grid-cols-1 gap-2">
-            {/* Mostra custo AJUSTADO (metade da % do sale) */}
             <Row label="Cost" value={currency(finalCost)} />
             <Row label="Final Sale" value={currency(finalSale)} big />
             <div className="h-px w-full bg-slate-200 my-2" />
